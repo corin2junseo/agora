@@ -42,7 +42,7 @@ const Testimonials = () => {
   ];
   return (
     <section className="testimonials">
-      <h2>What our students say</h2>
+      <h2>고객님의 소리</h2>
       <div className="testmonials-cards">
         {testimonialsData.map((e) => (
           <div className="testimonial-card" key={e.id}>

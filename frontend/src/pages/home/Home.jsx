@@ -9,10 +9,10 @@ const Home = () => {
     <div>
       <div className="home">
         <div className="home-content">
-          <h1>Welcome to our E-learning Platform</h1>
-          <p>Learn, Grow, Excel</p>
+          <h1>Agora E-learning Platform</h1>
+          <p>Realtime Communication, Learn , Grow up</p>
           <button onClick={() => navigate("/courses")} className="common-btn">
-            Get Started
+            지금 시작해보세요
           </button>
         </div>
       </div>

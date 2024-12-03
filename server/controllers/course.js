@@ -1,4 +1,4 @@
-import { instance } from "../index.js";
+//import { instance } from "../index.js";//결제 활성화 x 
 import TryCatch from "../middlewares/TryCatch.js";
 import { Courses } from "../models/Courses.js";
 import { Lecture } from "../models/Lecture.js";
@@ -71,16 +71,17 @@ export const checkout = TryCatch(async (req, res) => {
 
   if (user.subscription.includes(course._id)) {
     return res.status(400).json({
-      message: "You already have this course",
+      message: "이미 수강한 강좌입니다",
     });
   }
 
   const options = {
-    amount: Number(course.price * 100),
+    amount: Number(course.price),
     currency: "INR",
   };
 
   const order = await instance.orders.create(options);
+  //해결못함
 
   res.status(201).json({
     order,
@@ -176,3 +177,99 @@ export const getYourProgress = TryCatch(async (req, res) => {
     progress,
   });
 });
+
+export const kakaoPayment = TryCatch(async (req,res) =>{
+  const token = req.headers.token;
+  const course = Courses.findOne()
+  
+  //추가
+});
+
+export const enrollCourse = TryCatch(async (req, res) => {
+  const token = req.headers.token;  
+  const course = Courses.findOne()
+
+  if (course == null) {
+    res.json({
+      message:"정보 없음"
+    })
+  }
+
+  res.json({
+    message:"수강신청 완료"
+  })
+});
+
+export const purchaseCourse = TryCatch(async (req, res) => {
+  // 요청 본문에서 userId와 courseId를 가져옵니다.
+  const { courseId } = req.body; // userId는 req.user._id로 가져옵니다.
+  //const userId = req.user._id; // 인증된 사용자 ID
+
+  try {
+    // 사용자 정보를 데이터베이스에서 가져옵니다.
+    const user = await User.findById('674efe255b79057754aadeb6');
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // 코스 정보를 데이터베이스에서 가져옵니다.
+    const course = await Courses.findById(courseId);
+    if (!course) {
+      return res.status(404).json({ message: "Course not found" });
+    }
+
+    // 사용자의 구독 목록에 코스가 포함되어 있는지 확인합니다.
+    if (user.subscription.includes(course._id)) {
+      return res.status(400).json({ message: "You already purchased this course" });
+    }
+
+    // 코스를 구매하는 로직을 여기에 추가합니다.
+    // 예를 들어, 사용자의 구독 목록에 코스를 추가합니다.
+    user.subscription.push(course._id);
+    await user.save();
+
+    return res.status(200).json({ message: "Course purchased successfully", courseId });
+  } catch (error) {
+    console.error("Error purchasing course:", error);
+    return res.status(500).json({ message: "Internal Server Error" });
+  }
+});
+
+
+
+export const purchaseCourse2 = TryCatch(async (req, res) => {
+  const { userId, courseId } = req.body; // 요청 본문에서 userId와 courseId 가져오기
+  userId.subscription.includes(courseId);
+
+  // const user = await User.findById(req.user._id);
+  
+  // const course = await Courses.findById(req.params.id);
+  // user.subscription.includes(course._id)
+});
+  // const { courseId } = req.params;
+  // const userId = req.user._id; // JWT에서 사용자 ID 가져오기
+
+//   try {
+//     const user = await User.findById(userId);
+//     if (!user) {
+//       return res.status(404).json({ message: "사용자를 찾을 수 없습니다." });
+//     }
+
+//     const course = await Course.findById(courseId);
+//     if (!course) {
+//       return res.status(404).json({ message: "강좌를 찾을 수 없습니다." });
+//     }
+
+//     if (user.subscription.includes(courseId)) {
+//       return res.status(400).json({ message: "이미 이 강좌를 구독하고 있습니다." });
+//     }
+
+//     user.subscription.push(courseId);
+//     await user.save();
+
+//     return res.status(200).json({ message: "구독이 완료되었습니다." });
+//   } catch (error) {
+//     console.error(error);
+//     return res.status(500).json({ message: "서버 오류가 발생했습니다." });
+//   }
+// });

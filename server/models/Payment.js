@@ -1,16 +1,17 @@
 import mongoose from "mongoose";
 
 const schema = new mongoose.Schema({
-  razorpay_order_id: {
+  kakao_order_id: {
     type: String,
     required: true,
   },
-  razorpay_payment_id: {
-    type: String,
+  user_id: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
     required: true,
   },
-  razorpay_signature: {
-    type: String,
+  amount: {
+    type: Number,
     required: true,
   },
 

@@ -9,7 +9,7 @@ const Courses = () => {
   console.log(courses);
   return (
     <div className="courses">
-      <h2>Available Courses</h2>
+      <h2>진행중인 강좌목록</h2>
 
       <div className="course-container">
         {courses && courses.length > 0 ? (

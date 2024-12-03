@@ -13,77 +13,51 @@ const CourseDescription = ({ user }) => {
   const navigate = useNavigate();
 
   const [loading, setLoading] = useState(false);
-
   const { fetchUser } = UserData();
-
   const { fetchCourse, course, fetchCourses, fetchMyCourse } = CourseData();
 
   useEffect(() => {
     fetchCourse(params.id);
-  }, []);
+  }, [params.id]);
 
-  const checkoutHandler = async () => {
+  const handleAccessCourse = () => {
+    if (user && user.subscription.includes(course._id)) {
+      navigate(`/course/${course._id}`);
+    } else {
+      toast.error("이 과정을 구매해야 합니다.");
+    }
+  };
+
+  const handlePurchaseCourse = async () => {
     const token = localStorage.getItem("token");
     setLoading(true);
 
-    const {
-      data: { order },
-    } = await axios.post(
-      `${server}/api/course/checkout/${params.id}`,
-      {},
-      {
-        headers: {
-          token,
-        },
-      }
-    );
-
-    const options = {
-      key: "rzp_test_yOMeMyaj2wlvTt", // Enter the Key ID generated from the Dashboard
-      amount: order.id, // Amount is in currency subunits. Default currency is INR. Hence, 50000 refers to 50000 paise
-      currency: "INR",
-      name: "E learning", //your business name
-      description: "Learn with us",
-      order_id: order.id, //This is a sample Order ID. Pass the `id` obtained in the response of Step 1
-
-      handler: async function (response) {
-        const { razorpay_order_id, razorpay_payment_id, razorpay_signature } =
-          response;
-
-        try {
-          const { data } = await axios.post(
-            `${server}/api/verification/${params.id}`,
-            {
-              razorpay_order_id,
-              razorpay_payment_id,
-              razorpay_signature,
-            },
-            {
-              headers: {
-                token,
-              },
-            }
-          );
-
-          await fetchUser();
-          await fetchCourses();
-          await fetchMyCourse();
-          toast.success(data.message);
-          setLoading(false);
-          navigate(`/payment-success/${razorpay_payment_id}`);
-        } catch (error) {
-          toast.error(error.response.data.message);
-          setLoading(false);
+    try {
+      const { data } = await axios.post(
+        `${server}/api/course/purchase/${course._id}`,
+        { courseId: course._id }, // courseId 포함
+        {
+          headers: {
+            Authorization: `Bearer ${token}`, // Authorization 헤더에 JWT 포함
+          },
         }
-      },
-      theme: {
-        color: "#8a4baf",
-      },
-    };
-    const razorpay = new window.Razorpay(options);
-
-    razorpay.open();
+      );
+      console.log(data);
+      await fetchUser();
+      await fetchCourses();
+      await fetchMyCourse();
+      toast.success(data.message);
+    } catch (error) {
+      const message = error.response ? error.response.data.message : "문제가 발생했습니다.";
+      toast.error(message);
+    } finally {
+      setLoading(false);
+    }
   };
+  
+
+  // 버튼 텍스트 결정
+  const buttonText = user && user.subscription.includes(course._id) ? "학습하기" : "구매하기";
 
   return (
     <>
@@ -108,18 +82,15 @@ const CourseDescription = ({ user }) => {
 
               <p>{course.description}</p>
 
-              <p>Let's get started with course At ₹{course.price}</p>
+              <p>{course.price}원</p>
 
               {user && user.subscription.includes(course._id) ? (
-                <button
-                  onClick={() => navigate(`/course/study/${course._id}`)}
-                  className="common-btn"
-                >
-                  Study
+                <button onClick={handleAccessCourse} className="common-btn">
+                  학습하기
                 </button>
               ) : (
-                <button onClick={checkoutHandler} className="common-btn">
-                  Buy Now
+                <button onClick={handlePurchaseCourse} className="common-btn">
+                  구매하기
                 </button>
               )}
             </div>
