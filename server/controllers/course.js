@@ -7,6 +7,13 @@ import crypto from "crypto";
 import { Payment } from "../models/Payment.js";
 import { Progress } from "../models/Progress.js";
 
+
+// export const myProfile = TryCatch(async (req, res) => {
+//   const user = await User.findById(req.user._id);
+
+//   res.json({ user });
+// });
+
 export const getAllCourses = TryCatch(async (req, res) => {
   const courses = await Courses.find();
   res.json({
@@ -57,12 +64,16 @@ export const fetchLecture = TryCatch(async (req, res) => {
 });
 
 export const getMyCourses = TryCatch(async (req, res) => {
-  const courses = await Courses.find({ _id: req.user.subscription });
+  // req.user.subscription의 값을 로그로 출력
+  console.log("User Subscription:", req.user.subscription);
+
+  const courses = await Courses.find({ _id: { $in: req.user.subscription } }); // _id가 subscription 배열에 포함된 강의 검색
 
   res.json({
     courses,
   });
 });
+
 
 export const checkout = TryCatch(async (req, res) => {
   const user = await User.findById(req.user._id);
@@ -134,27 +145,39 @@ export const paymentVerification = TryCatch(async (req, res) => {
 });
 
 export const addProgress = TryCatch(async (req, res) => {
-  const progress = await Progress.findOne({
+  // Progress 문서 찾기
+  let progress = await Progress.findOne({
     user: req.user._id,
     course: req.query.course,
   });
 
   const { lectureId } = req.query;
 
+  // Progress 문서가 없으면 새로 생성
+  if (!progress) {
+    progress = new Progress({
+      user: req.user._id,
+      course: req.query.course,
+      completedLectures: [],
+    });
+  }
+
+  // 이미 수강한 강의인지 확인
   if (progress.completedLectures.includes(lectureId)) {
     return res.json({
       message: "Progress recorded",
     });
   }
 
+  // 강의 추가
   progress.completedLectures.push(lectureId);
-
   await progress.save();
 
   res.status(201).json({
-    message: "new Progress added",
+    message: "New progress added",
   });
 });
+
 
 export const getYourProgress = TryCatch(async (req, res) => {
   const progress = await Progress.find({
@@ -201,13 +224,14 @@ export const enrollCourse = TryCatch(async (req, res) => {
 });
 
 export const purchaseCourse = TryCatch(async (req, res) => {
+  
   // 요청 본문에서 userId와 courseId를 가져옵니다.
   const { courseId } = req.body; // userId는 req.user._id로 가져옵니다.
-  //const userId = req.user._id; // 인증된 사용자 ID
+  const userId = req.user._id; // 인증된 사용자 ID
 
   try {
     // 사용자 정보를 데이터베이스에서 가져옵니다.
-    const user = await User.findById('674efe255b79057754aadeb6');
+    const user = await User.findById(userId);
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
@@ -235,41 +259,15 @@ export const purchaseCourse = TryCatch(async (req, res) => {
   }
 });
 
+export const getMyCourses2 = TryCatch(async (req, res) => {
+  const courses = await Courses.find({ _id: req.user.subscription });
 
+  res.json({
+    courses,
+  });
+});
 
 export const purchaseCourse2 = TryCatch(async (req, res) => {
   const { userId, courseId } = req.body; // 요청 본문에서 userId와 courseId 가져오기
   userId.subscription.includes(courseId);
-
-  // const user = await User.findById(req.user._id);
-  
-  // const course = await Courses.findById(req.params.id);
-  // user.subscription.includes(course._id)
 });
-  // const { courseId } = req.params;
-  // const userId = req.user._id; // JWT에서 사용자 ID 가져오기
-
-//   try {
-//     const user = await User.findById(userId);
-//     if (!user) {
-//       return res.status(404).json({ message: "사용자를 찾을 수 없습니다." });
-//     }
-
-//     const course = await Course.findById(courseId);
-//     if (!course) {
-//       return res.status(404).json({ message: "강좌를 찾을 수 없습니다." });
-//     }
-
-//     if (user.subscription.includes(courseId)) {
-//       return res.status(400).json({ message: "이미 이 강좌를 구독하고 있습니다." });
-//     }
-
-//     user.subscription.push(courseId);
-//     await user.save();
-
-//     return res.status(200).json({ message: "구독이 완료되었습니다." });
-//   } catch (error) {
-//     console.error(error);
-//     return res.status(500).json({ message: "서버 오류가 발생했습니다." });
-//   }
-// });

@@ -62,7 +62,8 @@ const AdminCourses = ({ user }) => {
     try {
       const { data } = await axios.post(`${server}/api/course/new`, myForm, {
         headers: {
-          token: localStorage.getItem("token"),
+          Authorization: `Bearer ${localStorage.getItem("token")}`, // 수정된 부분
+          //중요token: localStorage.getItem("token"),
         },
       });
 

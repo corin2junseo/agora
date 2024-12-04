@@ -27,20 +27,21 @@ export const CourseContextProvider = ({ children }) => {
       console.log(error);
     }
   }
-
-  async function fetchMyCourse() {
+ //아주 중요
+  const fetchMyCourse = async () => {
     try {
+      const token = localStorage.getItem("token");
       const { data } = await axios.get(`${server}/api/mycourse`, {
         headers: {
-          token: localStorage.getItem("token"),
+          Authorization: `Bearer ${token}`, // Bearer 토큰 형식
         },
       });
-
       setMyCourse(data.courses);
     } catch (error) {
-      console.log(error);
+      console.error("Error fetching my courses:", error.response ? error.response.data : error);
     }
-  }
+  };
+  
 
   useEffect(() => {
     fetchCourses();

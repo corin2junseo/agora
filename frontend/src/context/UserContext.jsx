@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useState, useCallback } from "react";
 import axios from "axios";
 import { server } from "../main";
 import toast, { Toaster } from "react-hot-toast";
@@ -6,12 +6,12 @@ import toast, { Toaster } from "react-hot-toast";
 const UserContext = createContext();
 
 export const UserContextProvider = ({ children }) => {
-  const [user, setUser] = useState([]);
+  const [user, setUser] = useState(null);
   const [isAuth, setIsAuth] = useState(false);
   const [btnLoading, setBtnLoading] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  async function loginUser(email, password, navigate, fetchMyCourse) {
+  const loginUser = async (email, password, navigate, fetchMyCourse) => {
     setBtnLoading(true);
     try {
       const { data } = await axios.post(`${server}/api/user/login`, {
@@ -23,17 +23,48 @@ export const UserContextProvider = ({ children }) => {
       localStorage.setItem("token", data.token);
       setUser(data.user);
       setIsAuth(true);
-      setBtnLoading(false);
-      navigate("/");
-      fetchMyCourse();
+      await fetchMyCourse(); // Fetch courses after login
+      navigate("/"); // Redirect to home or courses page
     } catch (error) {
-      setBtnLoading(false);
       setIsAuth(false);
-      toast.error(error.response.data.message);
+      toast.error(error.response?.data?.message || "Login failed");
+    } finally {
+      setBtnLoading(false);
     }
-  }
+  };
 
-  async function registerUser(name, email, password, navigate) {
+  const logoutUser = () => {
+    localStorage.removeItem("token");
+    setUser(null);
+    setIsAuth(false);
+    toast.success("Logged out successfully");
+  };
+
+  const fetchUser = useCallback(async () => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const { data } = await axios.get(`${server}/api/user/me`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      setUser(data.user);
+      setIsAuth(true);
+    } catch (error) {
+      console.log(error);
+      setIsAuth(false);
+    } finally {
+      setLoading(false);
+    }
+  }, []); // 의존성 배열을 빈 배열로 설정하여 최초 마운트 시에만 호출하게 함
+
+  const registerUser = async (name, email, password, navigate) => {
     setBtnLoading(true);
     try {
       const { data } = await axios.post(`${server}/api/user/register`, {
@@ -48,49 +79,14 @@ export const UserContextProvider = ({ children }) => {
       navigate("/verify");
     } catch (error) {
       setBtnLoading(false);
-      toast.error(error.response.data.message);
+      toast.error(error.response?.data?.message || "Registration failed");
     }
-  }
-
-  async function verifyOtp(otp, navigate) {
-    setBtnLoading(true);
-    const activationToken = localStorage.getItem("activationToken");
-    try {
-      const { data } = await axios.post(`${server}/api/user/verify`, {
-        otp,
-        activationToken,
-      });
-
-      toast.success(data.message);
-      navigate("/login");
-      localStorage.clear();
-      setBtnLoading(false);
-    } catch (error) {
-      toast.error(error.response.data.message);
-      setBtnLoading(false);
-    }
-  }
-
-  async function fetchUser() {
-    try {
-      const { data } = await axios.get(`${server}/api/user/me`, {
-        headers: {
-          token: localStorage.getItem("token"),
-        },
-      });
-
-      setIsAuth(true);
-      setUser(data.user);
-      setLoading(false);
-    } catch (error) {
-      console.log(error);
-      setLoading(false);
-    }
-  }
+  };
 
   useEffect(() => {
-    fetchUser();
-  }, []);
+    fetchUser(); // Fetch user on initial load
+  }, [fetchUser]); // fetchUser를 의존성 배열에 추가
+
   return (
     <UserContext.Provider
       value={{
@@ -99,10 +95,10 @@ export const UserContextProvider = ({ children }) => {
         setIsAuth,
         isAuth,
         loginUser,
+        logoutUser,
         btnLoading,
         loading,
         registerUser,
-        verifyOtp,
         fetchUser,
       }}
     >
@@ -112,4 +108,15 @@ export const UserContextProvider = ({ children }) => {
   );
 };
 
-export const UserData = () => useContext(UserContext);
+export const UserData = () => {
+  const context = useContext(UserContext);
+  if (!context) {
+    throw new Error("UserData must be used within a UserContextProvider");
+  }
+  return context;
+};
+// fetchUser 함수의 의존성 관리: fetchUser 함수가 매번 새로운 참조를 가지지 않도록 useCallback을 사용하여 메모이제이션합니다.
+
+// req 변수를 제거: console.log(req.user.role);는 정의되지 않은 변수 req를 참조하고 있습니다. 이를 제거하거나 적절히 수정해야 합니다.
+
+// 비동기 함수 관리: fetchUser를 useEffect 안에서 호출할 때 비동기 처리를 적절히 관리합니다.

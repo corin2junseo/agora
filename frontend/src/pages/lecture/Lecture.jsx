@@ -28,32 +28,33 @@ const Lecture = ({ user }) => {
     try {
       const { data } = await axios.get(`${server}/api/lectures/${params.id}`, {
         headers: {
-          token: localStorage.getItem("token"),
+          Authorization: `Bearer ${localStorage.getItem("token")}`, // Bearer 형식으로 설정
         },
       });
       setLectures(data.lectures);
       setLoading(false);
     } catch (error) {
-      console.log(error);
+      console.log("Error fetching lectures:", error);
       setLoading(false);
     }
   }
-
+  
   async function fetchLecture(id) {
     setLecLoading(true);
     try {
       const { data } = await axios.get(`${server}/api/lecture/${id}`, {
         headers: {
-          token: localStorage.getItem("token"),
+          Authorization: `Bearer ${localStorage.getItem("token")}`, // Bearer 형식으로 수정
         },
       });
       setLecture(data.lecture);
       setLecLoading(false);
     } catch (error) {
-      console.log(error);
+      console.log("Error fetching lecture:", error);
       setLecLoading(false);
     }
   }
+  
 
   const changeVideoHandler = (e) => {
     const file = e.target.files[0];
@@ -82,7 +83,7 @@ const Lecture = ({ user }) => {
         myForm,
         {
           headers: {
-            token: localStorage.getItem("token"),
+            Authorization: `Bearer ${localStorage.getItem("token")}`, // 수정된 부분
           },
         }
       );
@@ -129,11 +130,11 @@ const Lecture = ({ user }) => {
         `${server}/api/user/progress?course=${params.id}`,
         {
           headers: {
-            token: localStorage.getItem("token"),
+            Authorization: `Bearer ${localStorage.getItem("token")}`, // Bearer 형식으로 설정
           },
         }
       );
-
+  
       setCompleted(data.courseProgressPercentage);
       setCompletedLec(data.completedLectures);
       setLectLength(data.allLectures);
@@ -150,7 +151,8 @@ const Lecture = ({ user }) => {
         {},
         {
           headers: {
-            token: localStorage.getItem("token"),
+            Authorization: `Bearer ${localStorage.getItem("token")}`, // Bearer 형식으로 수정
+            //중요 token: localStorage.getItem("token"),
           },
         }
       );

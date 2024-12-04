@@ -1,10 +1,12 @@
 import React from "react";
 import "./dashbord.css";
 import { CourseData } from "../../context/CourseContext";
+import { UserData } from "../../context/UserContext";
 import CourseCard from "../../components/coursecard/CourseCard";
 
 const Dashbord = () => {
   const { mycourse } = CourseData();
+  const { user, fetchUser } = UserData();
   return (
     <div className="student-dashboard">
       <h2>All Enrolled Courses</h2>

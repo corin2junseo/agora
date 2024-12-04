@@ -8,9 +8,10 @@ import {
   checkout,
   paymentVerification,
   enrollCourse,
-  purchaseCourse,
+  purchaseCourse,  
 } from "../controllers/course.js";
 import { isAuth } from "../middlewares/isAuth.js";
+
 
 const router = express.Router();
 
@@ -23,7 +24,7 @@ router.post("/course/checkout/:id", isAuth, checkout);
 router.post("/verification/:id", isAuth, paymentVerification);
 //추가
 router.post('/course/enroll/:id', enrollCourse); // enrollCourse 사용
-router.post('/course/purchase/:id', purchaseCourse); // enrollCourse 사용
+router.post('/course/purchase/:id', isAuth,purchaseCourse); // enrollCourse 사용
 
 
 export default router;

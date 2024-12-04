@@ -35,17 +35,23 @@ export const isAuth = async (req, res, next) => {
 
 export const isAdmin = (req, res, next) => {
   try {
-    if (!req.user || req.user.role !== "admin") {
+    if (!req.user) {
       return res.status(403).json({
-        message: "You are not admin",
+        message: "User not authenticated",
+      });
+    }
+
+    if (req.user.role !== "admin") {
+      return res.status(403).json({
+        message: "You are not authorized to access this resource.",
       });
     }
 
     next();
   } catch (error) {
-    console.error(error);
+    console.error("Admin Check Error:", error); // 오류 로그
     res.status(500).json({
-      message: error.message,
+      message: "Internal server error",
     });
   }
 };
